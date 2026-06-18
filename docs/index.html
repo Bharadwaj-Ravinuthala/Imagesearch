@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Parts Finder — Visual &amp; Text Catalog Search</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%2315140F'/%3E%3Cpath fill='%23FF6B1A' d='M12 8a4 4 0 100 8 4 4 0 000-8zm9 2.7l-1.9-.3a7 7 0 00-.6-1.4l1.1-1.6a.5.5 0 00-.1-.7l-1.4-1.4a.5.5 0 00-.7-.1l-1.6 1.1a7 7 0 00-1.4-.6L14.1 3a.5.5 0 00-.5-.4h-2a.5.5 0 00-.5.4l-.3 1.9a7 7 0 00-1.4.6L7.8 4.4a.5.5 0 00-.7.1L5.7 5.9a.5.5 0 00-.1.7l1.1 1.6a7 7 0 00-.6 1.4l-1.9.3a.5.5 0 00-.4.5v2a.5.5 0 00.4.5l1.9.3c.14.5.34.97.6 1.4l-1.1 1.6a.5.5 0 00.1.7l1.4 1.4c.2.2.5.22.7.1l1.6-1.1c.43.26.9.46 1.4.6l.3 1.9a.5.5 0 00.5.4h2a.5.5 0 00.5-.4l.3-1.9c.5-.14.97-.34 1.4-.6l1.6 1.1c.2.12.5.1.7-.1l1.4-1.4a.5.5 0 00.1-.7l-1.1-1.6c.26-.43.46-.9.6-1.4l1.9-.3a.5.5 0 00.4-.5v-2a.5.5 0 00-.4-.5z'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#15140F;
+    --plate:#211E18;
+    --plate-2:#272319;
+    --plate-edge:#3A352B;
+    --safety:#FF6B1A;
+    --safety-dim:#C2501A;
+    --green:#4CAF6D;
+    --amber:#E8B23D;
+    --red:#D9544A;
+    --paper:#F3EDE2;
+    --paper-dim:#9C9483;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'IBM Plex Sans',sans-serif;
+    min-height:100vh;
+    background-image:
+      linear-gradient(var(--ink), var(--ink)),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0.018) 1px, transparent 1px, transparent 3px);
+  }
+  a{color:var(--safety);}
+  button{font-family:inherit;}
+  ::selection{background:var(--safety);color:var(--ink);}
+  :focus-visible{outline:2px solid var(--safety);outline-offset:2px;}
+
+  /* ---------- header ---------- */
+  header.bar{
+    position:sticky;top:0;z-index:20;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;
+    padding:18px 28px;
+    background:var(--plate);
+    border-bottom:3px solid var(--plate-edge);
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand svg{width:30px;height:30px;flex:none;}
+  .brand h1{
+    font-family:'Big Shoulders Stencil',sans-serif;
+    font-weight:800;
+    font-size:26px;
+    letter-spacing:0.06em;
+    margin:0;
+    line-height:1;
+  }
+  .brand p{margin:2px 0 0;font-size:11.5px;color:var(--paper-dim);letter-spacing:0.04em;}
+  .gear-btn{
+    width:38px;height:38px;border-radius:50%;
+    background:var(--plate-2);border:1px solid var(--plate-edge);
+    color:var(--paper-dim);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .25s ease, color .15s ease, border-color .15s ease;
+  }
+  .gear-btn:hover{color:var(--safety);border-color:var(--safety-dim);}
+  .gear-btn.open{transform:rotate(45deg);color:var(--safety);}
+  .gear-btn svg{width:18px;height:18px;}
+
+  /* ---------- settings drawer ---------- */
+  .settings{
+    max-height:0;overflow:hidden;
+    background:var(--plate-2);
+    border-bottom:1px solid var(--plate-edge);
+    transition:max-height .25s ease;
+  }
+  .settings.open{max-height:240px;}
+  .settings-inner{
+    padding:18px 28px;display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;
+  }
+  .field{display:flex;flex-direction:column;gap:6px;min-width:240px;flex:1;}
+  .field.small{min-width:120px;flex:none;width:140px;}
+  .field label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--paper-dim);}
+  .field input{
+    background:var(--ink);border:1px solid var(--plate-edge);color:var(--paper);
+    border-radius:var(--radius);padding:9px 11px;font-family:'IBM Plex Mono',monospace;font-size:13px;
+  }
+  .field input::placeholder{color:#5d5749;}
+  .field small{color:var(--paper-dim);font-size:11px;}
+  .save-btn{
+    background:var(--safety);color:var(--ink);border:none;
+    padding:10px 18px;border-radius:var(--radius);font-weight:600;font-size:13px;
+    letter-spacing:.03em;cursor:pointer;transition:background .15s ease;
+  }
+  .save-btn:hover{background:#ff7c33;}
+  .settings-note{flex-basis:100%;font-size:11.5px;color:var(--paper-dim);}
+
+  /* ---------- search panel ---------- */
+  main{max-width:1180px;margin:0 auto;padding:28px;}
+  .search-panel{
+    background:var(--plate);border:1px solid var(--plate-edge);border-radius:6px;
+    overflow:hidden;
+  }
+  .tabs{display:flex;border-bottom:1px solid var(--plate-edge);}
+  .tab{
+    flex:1;background:none;border:none;color:var(--paper-dim);
+    padding:14px 10px;font-size:13.5px;font-weight:600;letter-spacing:.04em;
+    text-transform:uppercase;cursor:pointer;position:relative;
+    transition:color .15s ease;
+  }
+  .tab.active{color:var(--paper);}
+  .tab.active::after{
+    content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;background:var(--safety);
+  }
+  .tab-panel{display:none;padding:26px;}
+  .tab-panel.active{display:block;}
+
+  .dropzone{
+    border:2px dashed var(--plate-edge);border-radius:var(--radius);
+    padding:36px 20px;text-align:center;cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .dropzone:hover, .dropzone.drag{border-color:var(--safety);background:rgba(255,107,26,0.05);}
+  .dropzone svg{width:30px;height:30px;color:var(--paper-dim);margin-bottom:10px;}
+  .dropzone p{margin:0;font-size:14px;color:var(--paper-dim);}
+  .dropzone strong{color:var(--paper);}
+  .dropzone input{display:none;}
+
+  .preview-row{display:flex;align-items:center;gap:16px;margin-top:18px;}
+  .preview-row img{width:78px;height:78px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--plate-edge);}
+  .preview-meta{flex:1;min-width:0;}
+  .preview-meta p{margin:0;font-size:13px;color:var(--paper);}
+  .preview-meta span{font-size:11.5px;color:var(--paper-dim);}
+  .clear-btn{background:none;border:1px solid var(--plate-edge);color:var(--paper-dim);border-radius:var(--radius);padding:6px 10px;font-size:12px;cursor:pointer;}
+  .clear-btn:hover{color:var(--red);border-color:var(--red);}
+
+  .go-btn{
+    margin-top:18px;width:100%;
+    background:var(--safety);color:var(--ink);border:none;
+    padding:13px;border-radius:var(--radius);font-weight:700;font-size:14px;
+    letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
+    transition:background .15s ease, opacity .15s ease;
+  }
+  .go-btn:hover{background:#ff7c33;}
+  .go-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  .text-row{display:flex;gap:10px;}
+  .text-row input{
+    flex:1;background:var(--ink);border:1px solid var(--plate-edge);color:var(--paper);
+    border-radius:var(--radius);padding:13px 14px;font-size:14.5px;
+  }
+  .text-row input::placeholder{color:#5d5749;}
+  .text-row button{
+    background:var(--safety);color:var(--ink);border:none;padding:0 22px;border-radius:var(--radius);
+    font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:13.5px;cursor:pointer;
+  }
+  .text-row button:hover{background:#ff7c33;}
+
+  .hint{margin-top:12px;font-size:12.5px;color:var(--amber);display:none;}
+  .hint.show{display:block;}
+
+  /* ---------- results ---------- */
+  .results-head{display:flex;align-items:baseline;justify-content:space-between;margin:30px 0 14px;}
+  .results-head h2{
+    font-family:'Big Shoulders Stencil',sans-serif;font-size:19px;letter-spacing:.04em;
+    margin:0;color:var(--paper);font-weight:700;
+  }
+  .results-head span{font-size:12px;color:var(--paper-dim);font-family:'IBM Plex Mono',monospace;}
+
+  .state-box{
+    border:1px dashed var(--plate-edge);border-radius:6px;padding:46px 20px;text-align:center;
+    color:var(--paper-dim);font-size:13.5px;
+  }
+  .state-box svg{width:34px;height:34px;margin-bottom:12px;color:var(--plate-edge);}
+  .state-box.error{border-color:var(--red);color:#e79892;}
+  .state-box.error svg{color:var(--red);}
+
+  .spin{animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @media (prefers-reduced-motion: reduce){
+    .spin{animation:none;}
+  }
+
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));gap:18px;
+  }
+  .card{
+    background:var(--plate);border:1px solid var(--plate-edge);border-radius:4px;
+    overflow:hidden;position:relative;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .card:hover{transform:translateY(-4px);box-shadow:0 12px 22px rgba(0,0,0,.45);border-color:#4a4434;}
+  .card::before, .card::after{
+    content:"";position:absolute;top:9px;width:7px;height:7px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #6b6354, #15140F 75%);
+    box-shadow:inset 0 0 2px #000;z-index:2;
+  }
+  .card::before{left:9px;}
+  .card::after{right:9px;}
+  .card-img-wrap{
+    position:relative;aspect-ratio:1/1;background:#0b0a08;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .card-img-wrap img{width:100%;height:100%;object-fit:contain;padding:14px;}
+  .no-img{font-size:11px;color:#544e40;font-family:'IBM Plex Mono',monospace;text-align:center;padding:0 10px;}
+  .gauge-badge{position:absolute;top:6px;right:6px;z-index:3;}
+  .thumbs{display:flex;gap:5px;padding:8px;background:var(--plate-2);overflow-x:auto;}
+  .thumbs img{
+    width:30px;height:30px;object-fit:cover;border-radius:2px;cursor:pointer;
+    border:1px solid transparent;opacity:.65;flex:none;transition:opacity .15s, border-color .15s;
+  }
+  .thumbs img.active{opacity:1;border-color:var(--safety);}
+  .card-body{padding:13px 14px 15px;border-top:1px solid var(--plate-edge);}
+  .card-body .desc{
+    font-size:13px;font-weight:600;color:var(--paper);text-transform:uppercase;
+    letter-spacing:.01em;margin:0 0 8px;line-height:1.3;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .pn-row{display:flex;align-items:baseline;gap:6px;}
+  .pn-row .pn-label{font-size:10px;color:var(--paper-dim);letter-spacing:.05em;}
+  .pn-row .pn-value{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--safety);word-break:break-all;}
+
+  footer{text-align:center;padding:30px 20px 50px;color:var(--paper-dim);font-size:11.5px;}
+
+  @media (max-width:560px){
+    header.bar{padding:14px 16px;}
+    main{padding:18px;}
+    .tab-panel{padding:18px;}
+    .settings-inner{padding:16px;}
+    .field{min-width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <svg viewBox="0 0 24 24" fill="none"><path fill="currentColor" style="color:var(--safety)" d="M12 8a4 4 0 100 8 4 4 0 000-8zm9 2.7l-1.9-.3a7 7 0 00-.6-1.4l1.1-1.6a.5.5 0 00-.1-.7l-1.4-1.4a.5.5 0 00-.7-.1l-1.6 1.1a7 7 0 00-1.4-.6L14.1 3a.5.5 0 00-.5-.4h-2a.5.5 0 00-.5.4l-.3 1.9a7 7 0 00-1.4.6L7.8 4.4a.5.5 0 00-.7.1L5.7 5.9a.5.5 0 00-.1.7l1.1 1.6a7 7 0 00-.6 1.4l-1.9.3a.5.5 0 00-.4.5v2a.5.5 0 00.4.5l1.9.3c.14.5.34.97.6 1.4l-1.1 1.6a.5.5 0 00.1.7l1.4 1.4c.2.2.5.22.7.1l1.6-1.1c.43.26.9.46 1.4.6l.3 1.9a.5.5 0 00.5.4h2a.5.5 0 00.5-.4l.3-1.9c.5-.14.97-.34 1.4-.6l1.6 1.1c.2.12.5.1.7-.1l1.4-1.4a.5.5 0 00.1-.7l-1.1-1.6c.26-.43.46-.9.6-1.4l1.9-.3a.5.5 0 00.4-.5v-2a.5.5 0 00-.4-.5z"/></svg>
+    <div>
+      <h1>PARTS FINDER</h1>
+      <p>Visual &amp; text search across the spare-parts catalog</p>
+    </div>
+  </div>
+  <button class="gear-btn" id="gearBtn" aria-label="Settings" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 005 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 005 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09A1.65 1.65 0 0015 4.6a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09A1.65 1.65 0 0019.4 15z"/></svg>
+  </button>
+</header>
+
+<div class="settings" id="settingsPanel">
+  <div class="settings-inner">
+    <div class="field">
+      <label for="apiBaseInput">Backend URL</label>
+      <input id="apiBaseInput" type="text" placeholder="https://your-api.example.com" autocomplete="off" />
+      <small>Where the FastAPI server is running — must be reachable from this page.</small>
+    </div>
+    <div class="field small">
+      <label for="topKInput">Results</label>
+      <input id="topKInput" type="number" min="1" max="50" value="12" />
+    </div>
+    <button class="save-btn" id="saveSettingsBtn">Apply</button>
+    <p class="settings-note">Served over HTTPS (GitHub Pages) can't call a plain HTTP backend — use an HTTPS URL or a tunnel like ngrok/Cloudflare Tunnel.</p>
+  </div>
+</div>
+
+<main>
+  <div class="search-panel">
+    <div class="tabs" role="tablist">
+      <button class="tab active" id="tabPhotoBtn" role="tab" aria-selected="true">Photo Search</button>
+      <button class="tab" id="tabTextBtn" role="tab" aria-selected="false">Text Search</button>
+    </div>
+
+    <div class="tab-panel active" id="photoPanel">
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload a photo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <p><strong>Drop a part photo here</strong> or click to upload</p>
+        <input type="file" id="fileInput" accept="image/*" />
+      </div>
+      <div class="preview-row" id="previewRow" style="display:none;">
+        <img id="previewImg" alt="Selected photo" />
+        <div class="preview-meta">
+          <p id="previewName">—</p>
+          <span id="previewSize"></span>
+        </div>
+        <button class="clear-btn" id="clearFileBtn">Remove</button>
+      </div>
+      <button class="go-btn" id="photoSearchBtn" disabled>Search by photo</button>
+      <p class="hint" id="photoHint">Set the backend URL in settings before searching.</p>
+    </div>
+
+    <div class="tab-panel" id="textPanel">
+      <div class="text-row">
+        <input type="text" id="textInput" placeholder="Part number or description, e.g. crown wheel pinion" />
+        <button id="textSearchBtn">Search</button>
+      </div>
+      <p class="hint" id="textHint">Set the backend URL in settings before searching.</p>
+    </div>
+  </div>
+
+  <div class="results-head" id="resultsHead" style="display:none;">
+    <h2>Results</h2>
+    <span id="resultsCount"></span>
+  </div>
+
+  <div id="resultsArea"></div>
+</main>
+
+<footer>CLIP-powered visual search · FastAPI backend</footer>
+
+<script>
+(function(){
+  // Edit this default before deploying if you want the field pre-filled for everyone.
+  var DEFAULT_API_BASE = "https://emperor-flakily-expend.ngrok-free.dev";
+  var DEFAULT_TOP_K = 5;
+
+  var state = { apiBase: DEFAULT_API_BASE, topK: DEFAULT_TOP_K, selectedFile: null };
+
+  var gearBtn = document.getElementById('gearBtn');
+  var settingsPanel = document.getElementById('settingsPanel');
+  var apiBaseInput = document.getElementById('apiBaseInput');
+  var topKInput = document.getElementById('topKInput');
+  var saveSettingsBtn = document.getElementById('saveSettingsBtn');
+
+  var tabPhotoBtn = document.getElementById('tabPhotoBtn');
+  var tabTextBtn = document.getElementById('tabTextBtn');
+  var photoPanel = document.getElementById('photoPanel');
+  var textPanel = document.getElementById('textPanel');
+
+  var dropzone = document.getElementById('dropzone');
+  var fileInput = document.getElementById('fileInput');
+  var previewRow = document.getElementById('previewRow');
+  var previewImg = document.getElementById('previewImg');
+  var previewName = document.getElementById('previewName');
+  var previewSize = document.getElementById('previewSize');
+  var clearFileBtn = document.getElementById('clearFileBtn');
+  var photoSearchBtn = document.getElementById('photoSearchBtn');
+  var photoHint = document.getElementById('photoHint');
+
+  var textInput = document.getElementById('textInput');
+  var textSearchBtn = document.getElementById('textSearchBtn');
+  var textHint = document.getElementById('textHint');
+
+  var resultsHead = document.getElementById('resultsHead');
+  var resultsCount = document.getElementById('resultsCount');
+  var resultsArea = document.getElementById('resultsArea');
+
+  apiBaseInput.value = state.apiBase;
+  topKInput.value = state.topK;
+  refreshHints();
+
+  // ---------- settings ----------
+  gearBtn.addEventListener('click', function(){
+    var open = settingsPanel.classList.toggle('open');
+    gearBtn.classList.toggle('open', open);
+    gearBtn.setAttribute('aria-expanded', open);
+  });
+  saveSettingsBtn.addEventListener('click', function(){
+    state.apiBase = apiBaseInput.value.trim().replace(/\/$/, '');
+    var k = parseInt(topKInput.value, 10);
+    state.topK = (k > 0 && k <= 50) ? k : DEFAULT_TOP_K;
+    refreshHints();
+    settingsPanel.classList.remove('open');
+    gearBtn.classList.remove('open');
+    gearBtn.setAttribute('aria-expanded', 'false');
+  });
+
+  function refreshHints(){
+    var ready = !!state.apiBase;
+    photoHint.classList.toggle('show', !ready);
+    textHint.classList.toggle('show', !ready);
+    photoSearchBtn.disabled = !ready || !state.selectedFile;
+  }
+
+  // ---------- tabs ----------
+  function showTab(which){
+    var photo = which === 'photo';
+    tabPhotoBtn.classList.toggle('active', photo);
+    tabTextBtn.classList.toggle('active', !photo);
+    tabPhotoBtn.setAttribute('aria-selected', photo);
+    tabTextBtn.setAttribute('aria-selected', !photo);
+    photoPanel.classList.toggle('active', photo);
+    textPanel.classList.toggle('active', !photo);
+  }
+  tabPhotoBtn.addEventListener('click', function(){ showTab('photo'); });
+  tabTextBtn.addEventListener('click', function(){ showTab('text'); });
+
+  // ---------- file selection ----------
+  function handleFile(file){
+    if (!file || !file.type.startsWith('image/')) return;
+    state.selectedFile = file;
+    var url = URL.createObjectURL(file);
+    previewImg.src = url;
+    previewName.textContent = file.name;
+    previewSize.textContent = (file.size / 1024).toFixed(0) + ' KB';
+    previewRow.style.display = 'flex';
+    refreshHints();
+  }
+  dropzone.addEventListener('click', function(){ fileInput.click(); });
+  dropzone.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+  fileInput.addEventListener('change', function(e){ handleFile(e.target.files[0]); });
+  ['dragenter','dragover'].forEach(function(evt){
+    dropzone.addEventListener(evt, function(e){ e.preventDefault(); dropzone.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(function(evt){
+    dropzone.addEventListener(evt, function(e){ e.preventDefault(); dropzone.classList.remove('drag'); });
+  });
+  dropzone.addEventListener('drop', function(e){
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  clearFileBtn.addEventListener('click', function(){
+    state.selectedFile = null;
+    fileInput.value = '';
+    previewRow.style.display = 'none';
+    refreshHints();
+  });
+
+  // ---------- search actions ----------
+  // Bypasses the ngrok free-tier "you are about to visit..." interstitial,
+  // which otherwise replaces every response (JSON or image) with an HTML page.
+  var NGROK_BYPASS_HEADERS = { 'ngrok-skip-browser-warning': 'true' };
+
+  photoSearchBtn.addEventListener('click', function(){
+    if (!state.selectedFile || !state.apiBase) return;
+    runSearch(function(){
+      var form = new FormData();
+      form.append('file', state.selectedFile);
+      var url = state.apiBase + '/search?top_k=' + state.topK + '&api_base=' + encodeURIComponent(state.apiBase);
+      return fetch(url, { method: 'POST', body: form, headers: NGROK_BYPASS_HEADERS });
+    });
+  });
+
+  textSearchBtn.addEventListener('click', triggerTextSearch);
+  textInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') triggerTextSearch(); });
+  function triggerTextSearch(){
+    var q = textInput.value.trim();
+    if (!q || !state.apiBase) return;
+    runSearch(function(){
+      var url = state.apiBase + '/text-search?q=' + encodeURIComponent(q) + '&top_k=' + state.topK + '&api_base=' + encodeURIComponent(state.apiBase);
+      return fetch(url, { headers: NGROK_BYPASS_HEADERS });
+    });
+  }
+
+  function runSearch(makeRequest){
+    showLoading();
+    makeRequest()
+      .then(function(res){
+        if (!res.ok) throw new Error('Server responded with ' + res.status);
+        return res.json();
+      })
+      .then(function(data){ renderResults(data); })
+      .catch(function(err){ showError(err); });
+  }
+
+  // ---------- result states ----------
+  function showLoading(){
+    resultsHead.style.display = 'none';
+    resultsArea.innerHTML =
+      '<div class="state-box">' +
+        '<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 005 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 005 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09A1.65 1.65 0 0015 4.6a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09A1.65 1.65 0 0019.4 15z"/></svg>' +
+        '<p>Scanning catalog…</p>' +
+      '</div>';
+  }
+
+  function showError(err){
+    resultsHead.style.display = 'none';
+    resultsArea.innerHTML =
+      '<div class="state-box error">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12" y2="16.01"/></svg>' +
+        '<p>Couldn\'t reach the backend. Check the URL in settings and confirm the server is running.</p>' +
+      '</div>';
+  }
+
+  function renderResults(items){
+    resultsHead.style.display = 'flex';
+    resultsCount.textContent = items.length + (items.length === 1 ? ' match' : ' matches');
+    if (!items.length){
+      resultsArea.innerHTML =
+        '<div class="state-box">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>' +
+          '<p>No matching parts found. Try a clearer photo or different keywords.</p>' +
+        '</div>';
+      return;
+    }
+    var grid = document.createElement('div');
+    grid.className = 'grid';
+    items.forEach(function(item){ grid.appendChild(buildCard(item)); });
+    resultsArea.innerHTML = '';
+    resultsArea.appendChild(grid);
+  }
+
+  function resolveUrl(u){
+    if (!u) return '';
+    if (/^https?:\/\//i.test(u)) return u;
+    return state.apiBase + u;
+  }
+
+  // <img src="..."> can't carry the ngrok bypass header, so images are
+  // fetched manually (with the header) and swapped in as blob URLs.
+  var blobUrlCache = {};
+  function loadImageBlobUrl(url){
+    if (blobUrlCache[url]) return blobUrlCache[url];
+    var p = fetch(url, { headers: NGROK_BYPASS_HEADERS })
+      .then(function(res){
+        if (!res.ok) throw new Error('image fetch failed: ' + res.status);
+        return res.blob();
+      })
+      .then(function(blob){
+        if (!blob.type || blob.type.indexOf('image/') !== 0) throw new Error('not an image response');
+        return URL.createObjectURL(blob);
+      })
+      .catch(function(){ return null; });
+    blobUrlCache[url] = p;
+    return p;
+  }
+
+  function markImageUnavailable(wrap, imgEl){
+    if (imgEl && imgEl.parentNode) imgEl.remove();
+    var noImg = document.createElement('div');
+    noImg.className = 'no-img';
+    noImg.textContent = 'IMAGE UNAVAILABLE';
+    wrap.appendChild(noImg);
+  }
+
+  function buildCard(item){
+    var card = document.createElement('div');
+    card.className = 'card';
+
+    var imgWrap = document.createElement('div');
+    imgWrap.className = 'card-img-wrap';
+    var urls = (item.image_urls || []).map(resolveUrl);
+    var mainImg = null;
+    if (urls.length){
+      mainImg = document.createElement('img');
+      mainImg.alt = item.description || item.product;
+      imgWrap.appendChild(mainImg);
+      loadImageBlobUrl(urls[0]).then(function(blobUrl){
+        if (blobUrl) mainImg.src = blobUrl;
+        else markImageUnavailable(imgWrap, mainImg);
+      });
+    } else {
+      var noImg = document.createElement('div');
+      noImg.className = 'no-img';
+      noImg.textContent = 'NO REFERENCE IMAGE';
+      imgWrap.appendChild(noImg);
+    }
+    var gaugeWrap = document.createElement('div');
+    gaugeWrap.className = 'gauge-badge';
+    gaugeWrap.innerHTML = buildGauge(item.score || 0);
+    imgWrap.appendChild(gaugeWrap);
+    card.appendChild(imgWrap);
+
+    if (urls.length > 1){
+      var thumbs = document.createElement('div');
+      thumbs.className = 'thumbs';
+      urls.forEach(function(u, i){
+        var t = document.createElement('img');
+        t.className = i === 0 ? 'active' : '';
+        thumbs.appendChild(t);
+        loadImageBlobUrl(u).then(function(blobUrl){
+          if (blobUrl) t.src = blobUrl;
+        });
+        t.addEventListener('click', function(){
+          if (t.src && mainImg) mainImg.src = t.src;
+          thumbs.querySelectorAll('img').forEach(function(el){ el.classList.remove('active'); });
+          t.classList.add('active');
+        });
+      });
+      card.appendChild(thumbs);
+    }
+
+    var body = document.createElement('div');
+    body.className = 'card-body';
+    var desc = document.createElement('p');
+    desc.className = 'desc';
+    desc.textContent = item.description || 'No description';
+    var pnRow = document.createElement('div');
+    pnRow.className = 'pn-row';
+    pnRow.innerHTML = '<span class="pn-label">P/N</span><span class="pn-value">' + escapeHtml(item.product || '—') + '</span>';
+    body.appendChild(desc);
+    body.appendChild(pnRow);
+    card.appendChild(body);
+
+    return card;
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  // ---------- gauge ----------
+  function polar(cx, cy, r, angleDeg){
+    var rad = angleDeg * Math.PI / 180;
+    return { x: cx + r * Math.cos(rad), y: cy - r * Math.sin(rad) };
+  }
+  function arcPath(cx, cy, r, a1, a2){
+    var p1 = polar(cx, cy, r, a1), p2 = polar(cx, cy, r, a2);
+    return 'M ' + p1.x.toFixed(2) + ' ' + p1.y.toFixed(2) + ' A ' + r + ' ' + r + ' 0 0 0 ' + p2.x.toFixed(2) + ' ' + p2.y.toFixed(2);
+  }
+  function buildGauge(score){
+    score = Math.max(0, Math.min(1, score));
+    var cx = 30, cy = 30, r = 22;
+    var needleAngle = 180 - score * 180;
+    var tip = polar(cx, cy, r - 5, needleAngle);
+    var pct = Math.round(score * 100);
+    return '' +
+      '<svg width="60" height="38" viewBox="0 0 60 34">' +
+        '<rect x="0" y="0" width="60" height="34" rx="4" fill="var(--plate-2)" stroke="var(--plate-edge)"/>' +
+        '<path d="' + arcPath(cx, cy, r, 180, 120) + '" fill="none" stroke="var(--red)" stroke-width="4" stroke-linecap="round"/>' +
+        '<path d="' + arcPath(cx, cy, r, 120, 60) + '" fill="none" stroke="var(--amber)" stroke-width="4" stroke-linecap="round"/>' +
+        '<path d="' + arcPath(cx, cy, r, 60, 0) + '" fill="none" stroke="var(--green)" stroke-width="4" stroke-linecap="round"/>' +
+        '<line x1="' + cx + '" y1="' + cy + '" x2="' + tip.x.toFixed(2) + '" y2="' + tip.y.toFixed(2) + '" stroke="var(--paper)" stroke-width="2" stroke-linecap="round"/>' +
+        '<circle cx="' + cx + '" cy="' + cy + '" r="2.4" fill="var(--paper)"/>' +
+        '<text x="30" y="32" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="8.5" fill="var(--paper-dim)">' + pct + '%</text>' +
+      '</svg>';
+  }
+})();
+</script>
+</body>
+</html>
